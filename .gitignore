@@ -7,7 +7,7 @@ venv/
 
 # artefatti di build del port (rigenerabili con deploy/build_port.sh)
 deploy/out/
-deploy/buddy-port.zip
+deploy/*.zip
 
 # Nessun file audio nel repo: i suoni sono generati a runtime.
 *.wav

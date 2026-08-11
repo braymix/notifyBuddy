@@ -1,62 +1,58 @@
 #!/bin/bash
 # =============================================================================
 #  Buddy — voce del menu "Ports" di ArkOS.
-#  Mostra tutto a schermo e, in caso di errore, TIENE l'errore visibile 60s
-#  cosi' lo puoi fotografare. Isolato: non tocca nulla del sistema.
+#  Robusto: cattura TUTTO in un log con redirezione semplice (niente trucchi),
+#  copia il log accanto a Buddy.sh (facile da trovare) e RESTA a schermo.
 # =============================================================================
 
 # trova la cartella dell'app su prima o seconda SD
+DIR=""
 for base in /roms/ports /roms2/ports; do
-  if [ -d "$base/buddy" ]; then DIR="$base/buddy"; break; fi
+  if [ -d "$base/buddy" ]; then DIR="$base/buddy"; PORTS="$base"; break; fi
 done
 if [ -z "$DIR" ]; then
+  clear 2>/dev/null
   echo "ERRORE: cartella 'buddy' non trovata in /roms/ports ne' /roms2/ports"
-  sleep 20; exit 1
+  echo "Spegni per uscire."
+  while true; do sleep 5; done
 fi
 cd "$DIR" || exit 1
 mkdir -p logs
 LOG="logs/run.out"
 
-# stampa a SCHERMO e salva su file contemporaneamente
-exec > >(tee -a "$LOG") 2>&1
+# --- tutto quello che segue va nel LOG (redirezione semplice, POSIX) ---------
+{
+  echo "==================== AVVIO $(date) ===================="
+  echo "[buddy] cartella: $DIR"
+  echo "[buddy] python: $(python3 --version 2>&1)  ($(command -v python3))"
+  echo "[buddy] arch:   $(python3 -c 'import platform;print(platform.machine())' 2>&1)"
 
-echo "=================== avvio $(date) ==================="
-echo "[buddy] cartella: $DIR"
-echo "[buddy] python: $(python3 --version 2>&1)"
+  echo "[buddy] --- passo 1: installazione dipendenze ---"
+  bash ./bootstrap.sh
 
-# 1) installa le dipendenze la prima volta (serve Wi-Fi)
-bash ./bootstrap.sh
+  echo "[buddy] --- passo 2: verifica import ---"
+  python3 -c "import numpy, pygame; print('[buddy] import numpy+pygame OK')"
+  IMP=$?
 
-# 2) preflight: se mancano numpy/pygame, fermati con un messaggio chiaro
-echo "[buddy] controllo dipendenze..."
-if ! python3 -c "import numpy, pygame" 2>&1; then
-  echo ""
-  echo "############################################################"
-  echo "# ERRORE: numpy o pygame NON disponibili."
-  echo "# L'installazione automatica non e' riuscita."
-  echo "# Cause tipiche: Wi-Fi assente, oppure pygame non installabile"
-  echo "# via pip su questo sistema (serve il piano B)."
-  echo "# Fotografa questa schermata e mandala allo sviluppatore."
-  echo "############################################################"
-  sleep 60
-  exit 1
-fi
+  if [ "$IMP" -ne 0 ]; then
+    echo "[buddy] STOP: numpy/pygame non importabili. Vedi errori sopra."
+  else
+    echo "[buddy] --- passo 3: avvio applicazione ---"
+    python3 main.py --sim
+    echo "[buddy] applicazione uscita con codice $?"
+  fi
+  echo "==================== FINE $(date) ===================="
+} > "$LOG" 2>&1
 
-# 3) lancia il buddy in demo (--sim: eventi finti, nessun broker richiesto)
-echo "[buddy] avvio applicazione..."
-python3 main.py --sim
-CODE=$?
-echo "[buddy] applicazione terminata con codice $CODE"
-
-# 4) se e' crashata, mostra le ultime righe e tieni la schermata
-if [ "$CODE" -ne 0 ]; then
-  echo ""
-  echo "############################################################"
-  echo "# CRASH (codice $CODE). Ultime righe del log:"
-  echo "############################################################"
-  tail -n 30 "$LOG"
-  echo "############################################################"
-  echo "# Fotografa questa schermata e mandala allo sviluppatore."
-  echo "############################################################"
-  sleep 60
-fi
+# --- copia il log dove e' facilissimo trovarlo e mostralo a schermo ----------
+cp "$LOG" "$PORTS/BUDDY-LOG.txt" 2>/dev/null
+clear 2>/dev/null
+echo "=================== BUDDY: RISULTATO ==================="
+tail -n 40 "$LOG"
+echo "======================================================="
+echo ">> Log salvato anche in:  $PORTS/BUDDY-LOG.txt"
+echo ">> FOTOGRAFA questa schermata o mandami quel file."
+echo ">> Per uscire: SELECT+START, oppure spegni la console."
+echo "======================================================="
+# resta fisso a schermo
+while true; do sleep 5; done

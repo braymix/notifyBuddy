@@ -13,3 +13,4 @@ deploy/buddy-port.zip
 *.wav
 *.mp3
 *.ogg
+deploy/wheels/

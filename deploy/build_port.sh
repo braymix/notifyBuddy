@@ -21,6 +21,13 @@ cp "$ROOT/deploy/bootstrap.sh" "$OUT/buddy/bootstrap.sh"
 chmod +x "$OUT/Buddy.sh" "$OUT/Diagnostica.sh" "$OUT/buddy/bootstrap.sh"
 touch "$OUT/buddy/logs/.gitkeep"
 
+# pacchetti ARM64 gia' pronti per l'installazione OFFLINE sulla console
+if ls "$ROOT/deploy/wheels/"*.whl >/dev/null 2>&1; then
+  mkdir -p "$OUT/buddy/wheels"
+  cp "$ROOT/deploy/wheels/"*.whl "$OUT/buddy/wheels/"
+  echo "inclusi wheel offline: $(ls -1 "$OUT/buddy/wheels" | wc -l)"
+fi
+
 # zip: estraendolo dentro /roms/ports/ crea Buddy.sh + Diagnostica.sh + buddy/
 cd "$OUT"
 rm -f "$ROOT/deploy/buddy-port.zip"

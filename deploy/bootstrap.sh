@@ -1,21 +1,40 @@
 #!/bin/bash
-# bootstrap.sh — installa le dipendenze Python UNA volta sola.
-# Scrive un marcatore .deps_ok cosi' gli avvii successivi sono immediati.
-# Non tocca nulla fuori da qui e da ~/.local (pip --user).
+# bootstrap.sh — installa numpy/pygame/paho UNA volta sola.
+# Prima prova OFFLINE dai pacchetti gia' pronti in ./wheels (nessuna rete,
+# nessuna compilazione). Se non bastano, tenta online come ripiego.
+# Scrive .deps_ok cosi' gli avvii successivi sono immediati. Non tocca nulla
+# fuori da qui e da ~/.local (pip --user).
 
 MARK=".deps_ok"
 [ -f "$MARK" ] && exit 0
 
-echo "[bootstrap] prima configurazione: installo numpy pygame paho-mqtt"
-echo "[bootstrap] serve il Wi-Fi attivo, puo' richiedere 1-2 minuti..."
+echo "[bootstrap] prima configurazione delle dipendenze..."
 
-# assicurati che pip esista
+# pip deve esistere
 python3 -m pip --version >/dev/null 2>&1 || python3 -m ensurepip --user >/dev/null 2>&1
 
-if python3 -m pip install --user --no-input numpy pygame paho-mqtt; then
+PKGS="numpy pygame paho-mqtt"
+
+# 1) OFFLINE dai wheel inclusi (il caso normale su questa console)
+if [ -d wheels ] && ls wheels/*.whl >/dev/null 2>&1; then
+  echo "[bootstrap] installo OFFLINE dai pacchetti inclusi (~1 min)..."
+  if python3 -m pip install --user --no-index --find-links wheels $PKGS; then
+    touch "$MARK"
+    echo "[bootstrap] OK (offline). Al prossimo avvio parte subito."
+    exit 0
+  fi
+  echo "[bootstrap] installazione offline non riuscita (architettura/Python diversi?)."
+  echo "[bootstrap] Python di sistema: $(python3 --version 2>&1) / $(python3 -c 'import platform;print(platform.machine())' 2>&1)"
+  echo "[bootstrap] Wheel disponibili:"; ls -1 wheels
+fi
+
+# 2) ONLINE come ripiego (serve Wi-Fi + pip recente)
+echo "[bootstrap] provo online (serve Wi-Fi)..."
+python3 -m pip install --user --upgrade pip >/dev/null 2>&1
+if python3 -m pip install --user --no-input $PKGS; then
   touch "$MARK"
-  echo "[bootstrap] dipendenze installate. Al prossimo avvio parte subito."
+  echo "[bootstrap] OK (online)."
 else
-  echo "[bootstrap] ATTENZIONE: installazione fallita."
-  echo "[bootstrap] Controlla il Wi-Fi e riavvia il port. Log in logs/run.out"
+  echo "[bootstrap] ATTENZIONE: installazione fallita (offline e online)."
+  echo "[bootstrap] Manda allo sviluppatore le righe qui sopra."
 fi

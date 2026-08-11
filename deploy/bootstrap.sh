@@ -18,14 +18,25 @@ PKGS="numpy pygame paho-mqtt tomli"
 
 # 1) OFFLINE dai wheel inclusi (il caso normale su questa console)
 if [ -d wheels ] && ls wheels/*.whl >/dev/null 2>&1; then
-  echo "[bootstrap] installo OFFLINE dai pacchetti inclusi (~1 min)..."
+  echo "[bootstrap] pip attuale: $(python3 -m pip --version 2>&1)"
+  # IMPORTANTISSIMO su Debian buster: il pip di sistema (18.x) NON sa leggere
+  # i pacchetti manylinux2014. Installo prima un pip moderno (offline) e uso
+  # quello per tutto il resto.
+  echo "[bootstrap] aggiorno pip/setuptools/wheel OFFLINE (necessario per Python 3.7)..."
+  python3 -m pip install --user --no-index --find-links wheels --upgrade pip setuptools wheel
+  echo "[bootstrap] pip aggiornato: $(python3 -m pip --version 2>&1)"
+
+  echo "[bootstrap] installo OFFLINE numpy/pygame/paho/tomli (~1 min)..."
   if python3 -m pip install --user --no-index --find-links wheels $PKGS; then
-    touch "$MARK"
-    echo "[bootstrap] OK (offline). Al prossimo avvio parte subito."
-    exit 0
+    if python3 -c "import numpy, pygame" 2>&1; then
+      touch "$MARK"
+      echo "[bootstrap] OK (offline). Al prossimo avvio parte subito."
+      exit 0
+    fi
+    echo "[bootstrap] installati ma non importabili (?)."
   fi
-  echo "[bootstrap] installazione offline non riuscita (architettura/Python diversi?)."
-  echo "[bootstrap] Python di sistema: $(python3 --version 2>&1) / $(python3 -c 'import platform;print(platform.machine())' 2>&1)"
+  echo "[bootstrap] installazione offline non riuscita."
+  echo "[bootstrap] Python: $(python3 --version 2>&1) / $(python3 -c 'import platform;print(platform.machine())' 2>&1)"
   echo "[bootstrap] Wheel disponibili:"; ls -1 wheels
 fi
 

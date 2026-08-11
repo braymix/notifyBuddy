@@ -13,7 +13,8 @@ echo "[bootstrap] prima configurazione delle dipendenze..."
 # pip deve esistere
 python3 -m pip --version >/dev/null 2>&1 || python3 -m ensurepip --user >/dev/null 2>&1
 
-PKGS="numpy pygame paho-mqtt"
+# tomli serve solo su Python < 3.11 (dove manca tomllib); innocuo altrove
+PKGS="numpy pygame paho-mqtt tomli"
 
 # 1) OFFLINE dai wheel inclusi (il caso normale su questa console)
 if [ -d wheels ] && ls wheels/*.whl >/dev/null 2>&1; then

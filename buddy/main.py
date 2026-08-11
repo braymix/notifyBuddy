@@ -104,7 +104,7 @@ class App:
             self.log.warning(f"mixer non disponibile: {exc} (audio off)")
 
         pygame.display.set_caption("buddy")
-        self.screen = pygame.display.set_mode(SIZE)
+        self.screen = self._init_display(pygame)
         self.clock = pygame.time.Clock()
         self.font = pygame.font.SysFont("dejavusans", 20)
 
@@ -134,6 +134,32 @@ class App:
         self.quit_combo = self.btn.get("quit_combo", [6, 7])
         self.pressed: set[int] = set()
         self.log.info(f"avviato (sim={sim}, muted={self.muted})")
+
+    def _init_display(self, pygame):
+        """Apre il display provando piu' driver SDL (framebuffer, X11, ...).
+
+        Su ArkOS/RK3326 il driver giusto varia; se non forziamo, spesso crasha.
+        Rispetta SDL_VIDEODRIVER se gia' impostato dall'esterno.
+        """
+        import os
+        forced = os.environ.get("SDL_VIDEODRIVER")
+        candidates = [forced] if forced else ["kmsdrm", "fbcon", "x11",
+                                              "directfb", "wayland"]
+        last = None
+        for drv in candidates:
+            if not drv:
+                continue
+            os.environ["SDL_VIDEODRIVER"] = drv
+            try:
+                pygame.display.quit()
+                pygame.display.init()
+                screen = pygame.display.set_mode(SIZE)
+                self.log.info(f"display OK con SDL_VIDEODRIVER={drv}")
+                return screen
+            except Exception as exc:  # noqa: BLE001
+                last = exc
+                self.log.warning(f"driver video '{drv}' fallito: {exc}")
+        raise RuntimeError(f"nessun driver video utilizzabile (ultimo: {last})")
 
     # ---- eventi ----------------------------------------------------------
     def _on_notification(self, notif: Dict[str, Any]) -> None:

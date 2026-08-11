@@ -25,12 +25,12 @@ body_hue = 200             # tinta di riposo del corpo (0..360)
 block_sources = []                     # es. ["android_system"]
 block_keywords = ["promo", "offerta"]  # ignora notifiche che contengono queste parole
 
-# --- mappa pulsanti del gamepad (indici SDL, si tarano in Fase 2) ------------
+# --- mappa pulsanti del gamepad (indici SDL, si tarano sul dispositivo) ------
 [buttons]
-ack = 0        # A
-replay = 1     # B
-mute = 2       # X
-quit = 7       # START
+ack = 0              # A
+replay = 1           # B
+mute = 2             # X
+quit_combo = [6, 7]  # USCITA sicura: SELECT+START insieme (non un tasto solo)
 
 # --- profili per-sorgente: la "firma" di ogni tipo di notifica ---------------
 # Override dei default in brain.py. Ogni sorgente ha suono + faccia riconoscibili;

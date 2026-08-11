@@ -129,7 +129,10 @@ class App:
             self.log.info(f"gamepad: {self.joy.get_name()}")
 
         self.filt = cfg.get("filters", {})
-        self.btn = cfg.get("buttons", {"ack": 0, "replay": 1, "mute": 2, "quit": 7})
+        self.btn = cfg.get("buttons", {"ack": 0, "replay": 1, "mute": 2})
+        # combo di uscita sicura (indici SDL): SELECT+START di default
+        self.quit_combo = self.btn.get("quit_combo", [6, 7])
+        self.pressed: set[int] = set()
         self.log.info(f"avviato (sim={sim}, muted={self.muted})")
 
     # ---- eventi ----------------------------------------------------------
@@ -184,7 +187,11 @@ class App:
                 elif ev.key in (pygame.K_x, pygame.K_m):
                     self._toggle_mute()               # X
             elif ev.type == pygame.JOYBUTTONDOWN:
-                if ev.button == self.btn.get("quit"):
+                self.pressed.add(ev.button)
+                # uscita SEMPRE via combo (es. SELECT+START): non dipende da un
+                # singolo indice indovinato, cosi' non resti bloccato.
+                if self.quit_combo and set(self.quit_combo) <= self.pressed:
+                    self.log.info("combo di uscita premuta")
                     self.running = False
                 elif ev.button == self.btn.get("ack"):
                     self._acknowledge()
@@ -192,6 +199,8 @@ class App:
                     self._replay()
                 elif ev.button == self.btn.get("mute"):
                     self._toggle_mute()
+            elif ev.type == pygame.JOYBUTTONUP:
+                self.pressed.discard(ev.button)
 
     # ---- loop ------------------------------------------------------------
     def run(self) -> None:

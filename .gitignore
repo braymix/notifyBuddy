@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+buddy/logs/*.log
+buddy/logs/*.out
+.venv/
+venv/
+
+# Nessun file audio nel repo: i suoni sono generati a runtime.
+*.wav
+*.mp3
+*.ogg

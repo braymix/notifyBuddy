@@ -1,0 +1,7 @@
+# Stack di base del buddy (console e PC di sviluppo)
+numpy>=1.24
+pygame>=2.1
+paho-mqtt>=1.6
+
+# Solo per l'agente PC Linux (agents/linux_dbus.py), NON sulla console:
+#   dbus-python   (Debian/Ubuntu: apt install python3-dbus python3-gi)

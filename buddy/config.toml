@@ -1,0 +1,58 @@
+# config.toml — configurazione del buddy.
+# Tutto qui e' modificabile senza toccare il codice.
+
+# seme opzionale per rendere deterministico il jitter (togli per varieta' piena)
+# seed = 42
+use_llm = false        # false = RuleBrain (offline, default). true = LLMBrain (stub)
+muted = false
+
+# --- broker MQTT (Fase 1: gira SULLA console, vedi note deploy) --------------
+[broker]
+host = "127.0.0.1"     # sulla console il broker e' locale
+port = 1883
+topic = "buddy/notify"
+username = ""
+password = ""
+
+# --- palette / estetica ------------------------------------------------------
+[palette]
+bg = [18, 18, 26]          # sfondo scuro sobrio
+accent = [255, 170, 60]    # accento caldo (badge)
+body_hue = 200             # tinta di riposo del corpo (0..360)
+
+# --- filtri: cosa NON deve mai comparire -------------------------------------
+[filters]
+block_sources = []                     # es. ["android_system"]
+block_keywords = ["promo", "offerta"]  # ignora notifiche che contengono queste parole
+
+# --- mappa pulsanti del gamepad (indici SDL, si tarano in Fase 2) ------------
+[buttons]
+ack = 0        # A
+replay = 1     # B
+mute = 2       # X
+quit = 7       # START
+
+# --- profili per-sorgente: la "firma" di ogni tipo di notifica ---------------
+# Override dei default in brain.py. Ogni sorgente ha suono + faccia riconoscibili;
+# il jitter aggiunge varieta' a ogni evento.
+[profiles.claude_code]
+mood = "happy"
+engine = "chime"
+root_hz = 587.33
+decay = 0.6
+brightness = 0.75
+density = 4
+mouth = "smile"
+hue = 140
+text = "fatto! ho finito"
+
+[profiles.teams]
+mood = "alert"
+engine = "pluck"
+root_hz = 392.0
+decay = 0.35
+brightness = 0.6
+density = 2
+mouth = "o"
+hue = 30
+text = "ping da Teams"
